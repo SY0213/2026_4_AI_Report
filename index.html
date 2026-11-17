@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>생성형 AI 실습 보고서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+/* Layout: one worksheet column; numbered sections follow the 4-step practice order, sticky progress bar on top. */
+:root{
+  --bg:#F7F5FC; --paper:#FFFFFF; --ink:#2B2350; --muted:#5A5378; --line:#E2DCF3; --soft:#EEEAF8;
+  --accent:#6B4FBB; --role:#6B4FBB; --ctx:#11766D; --fmt:#C46A12; --warn:#C0392B; --ok:#11766D;
+  --role-bg:#EFEAFB; --ctx-bg:#E3F4F1; --fmt-bg:#FCEEDD;
+  --font:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17142A; --paper:#211D3A; --ink:#ECE8FA; --muted:#B4ADD3; --line:#3A3460; --soft:#2A2548;
+  --accent:#A993F0; --role:#B9A5F7; --ctx:#5FD0BD; --fmt:#F2A85A; --warn:#FF7B6B; --ok:#5FD0BD;
+  --role-bg:#2E2752; --ctx-bg:#183A38; --fmt-bg:#3D2C19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17142A; --paper:#211D3A; --ink:#ECE8FA; --muted:#B4ADD3; --line:#3A3460; --soft:#2A2548;
+  --accent:#A993F0; --role:#B9A5F7; --ctx:#5FD0BD; --fmt:#F2A85A; --warn:#FF7B6B; --ok:#5FD0BD;
+  --role-bg:#2E2752; --ctx-bg:#183A38; --fmt-bg:#3D2C19; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.top{padding-block:28px 6px;display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--accent)}
+h1{font-size:clamp(24px,5vw,32px);font-weight:900;line-height:1.25;margin:0;text-wrap:balance}
+.lead{color:var(--muted);margin:0}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+.meter{flex:1;height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.meter span{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.bar b{font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.sec-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.num{width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--paper);display:grid;place-items:center;font-weight:900;font-size:14px;flex:none}
+.done .num{background:var(--ok)}
+h2{font-size:18px;margin:0;font-weight:900}
+.tag{font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 10px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+label.f{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:14px}
+input[type=text],textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:84px;resize:vertical}
+input[type=text]:focus,textarea:focus,button:focus-visible,.choice input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:560px){.row,.row3{grid-template-columns:1fr}}
+.choice{display:flex;position:relative}
+.choice input{position:absolute;opacity:0}
+.choice span{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;background:var(--bg)}
+.choice span small{color:var(--muted);font-size:12px}
+.choice input:checked+span{border-color:var(--accent);background:var(--role-bg);box-shadow:inset 0 0 0 1px var(--accent)}
+.rcf{display:flex;flex-direction:column;gap:10px}
+.rcf label{display:grid;grid-template-columns:92px 1fr;gap:10px;align-items:start;font-weight:700;font-size:14px}
+@media (max-width:560px){.rcf label{grid-template-columns:1fr}}
+.k{border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.3}
+.k.r{background:var(--role-bg);color:var(--role)} .k.c{background:var(--ctx-bg);color:var(--ctx)} .k.fm{background:var(--fmt-bg);color:var(--fmt)}
+.preview{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:14px;min-height:48px}
+.preview .r{color:var(--role);font-weight:700}.preview .c{color:var(--ctx);font-weight:700}.preview .fm{color:var(--fmt);font-weight:700}
+.preview.empty{color:var(--muted)}
+.checks{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:700;border-radius:99px;padding:2px 10px;border:1px solid var(--line);color:var(--muted)}
+.pill.on{border-color:transparent;color:var(--paper)}
+.pill.on.r{background:var(--role)}.pill.on.c{background:var(--ctx)}.pill.on.fm{background:var(--fmt)}
+details{border:1px dashed var(--line);border-radius:10px;padding:10px 12px}
+summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--accent)}
+details p{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.ox{display:flex;gap:10px}
+.ox .choice span{flex-direction:row;justify-content:center;font-weight:700}
+.rules{display:flex;flex-direction:column;gap:8px}
+.rules label{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.rules input{margin-top:5px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.blank{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700}
+.blank input{width:140px}
+.rubric{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:560px){.rubric{grid-template-columns:1fr}}
+.rubric div{background:var(--bg);border-radius:10px;padding:12px;font-size:13px;color:var(--muted)}
+.rubric b{display:block;color:var(--ink);font-size:14px}
+.rubric em{font-style:normal;font-family:var(--mono);color:var(--accent);font-size:13px}
+.submit{background:var(--ink);color:var(--bg);border:none}
+.submit h2{color:var(--bg)}
+.submit .hint{color:var(--bg);opacity:.8}
+.submit ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.missing{font-size:13px;color:#FFC9C2;margin:0}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border-radius:10px;padding:11px 18px;cursor:pointer;border:1px solid transparent}
+.primary{background:var(--accent);color:#fff}
+.ghost{background:transparent;color:var(--bg);border-color:rgba(255,255,255,.35)}
+.out{font-family:var(--font);font-size:13px;min-height:160px;background:var(--paper);color:var(--ink);border-radius:10px}
+.toast{font-size:13px;font-weight:700;min-height:20px;margin:0}
+.privacy{font-size:12px;color:var(--muted);text-align:center;margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.fallback{border-color:rgba(255,255,255,.3)}
+.fallback summary{color:var(--bg)}
+.fallback .hint{margin:8px 0}
+.fallback .out{margin-top:10px}
+button:disabled{opacity:.6;cursor:wait}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">5차시 수행평가 · 생성형 AI에게 질문하기</div>
+    <h1>생성형 AI 실습 보고서</h1>
+    <p class="lead">실습 순서대로 칸을 채우고, 맨 아래에서 복사해 제출하세요.</p>
+  </header>
+
+  <div class="bar" aria-live="polite"><div class="meter"><span id="meter"></span></div><b id="count">0 / 6 항목</b></div>
+
+  <section id="s0">
+    <div class="sec-head"><h2>내 정보</h2></div>
+    <div class="row">
+      <label class="f">학번 <input type="text" id="sid" placeholder="예: 20315" inputmode="numeric" autocomplete="off"></label>
+      <label class="f">이름 <input type="text" id="sname" placeholder="이름" autocomplete="off"></label>
+    </div>
+  </section>
+
+  <section id="s1" data-sec>
+    <div class="sec-head"><span class="num">1</span><h2>선택한 미션</h2></div>
+    <div class="row3" role="radiogroup" aria-label="미션 선택">
+      <label class="choice"><input type="radio" name="mission" value="미션 1 · 요약 (나는 100만 유튜버)"><span><b>미션 1 · 요약</b><small>나는 100만 유튜버</small></span></label>
+      <label class="choice"><input type="radio" name="mission" value="미션 2 · 번역 (부산 핫플! 글로벌 가이드)"><span><b>미션 2 · 번역</b><small>부산 핫플! 글로벌 가이드</small></span></label>
+      <label class="choice"><input type="radio" name="mission" value="미션 3 · 아이디어 (우리 학교 기획자)"><span><b>미션 3 · 아이디어</b><small>우리 학교 기획자</small></span></label>
+    </div>
+    <label class="f">주제 <input type="text" id="topic" placeholder="예: 과학 - 소화기관 / 광안리 해수욕장 / 축제 부스 이름"></label>
+  </section>
+
+  <section id="s2" data-sec>
+    <div class="sec-head"><span class="num">2</span><h2>처음 질문 (Level 1)</h2><span class="tag">설계</span></div>
+    <p class="hint">R-C-F 없이 짧게 물어본 질문과, AI가 한 대답을 한두 줄로 요약하세요.</p>
+    <label class="f">처음 질문 <textarea id="q1" placeholder="예: 위 내용을 요약해 줘."></textarea></label>
+    <label class="f">AI 대답 요약 <textarea id="a1" placeholder="예: 내용을 다섯 줄로 줄여 줬지만 어려운 낱말이 그대로 남아 있었다."></textarea></label>
+  </section>
+
+  <section id="s3" data-sec>
+    <div class="sec-head"><span class="num">3</span><h2>R-C-F 프롬프트 (Level 2)</h2><span class="tag">설계</span></div>
+    <p class="hint">세 칸을 모두 채우면 아래에 완성된 프롬프트가 만들어져요. 이걸 AI에 그대로 넣어 보세요.</p>
+    <div class="rcf">
+      <label><span class="k r">역할 R<br>누구로서?</span><textarea id="r" placeholder="예: 너는 인기 과학 유튜버야."></textarea></label>
+      <label><span class="k c">맥락 C<br>어떤 상황·대상?</span><textarea id="c" placeholder="예: 이 내용을 초등학생 구독자도 이해하게 비유를 들어서"></textarea></label>
+      <label><span class="k fm">형식 F<br>어떤 모양으로?</span><textarea id="fm" placeholder="예: 오프닝 인사가 포함된 방송 대본으로 요약해 줘."></textarea></label>
+    </div>
+    <div class="checks" aria-label="R-C-F 확인"><span class="pill r" id="pr">역할</span><span class="pill c" id="pc">맥락</span><span class="pill fm" id="pf">형식</span></div>
+    <div class="preview empty" id="prev">세 칸을 채우면 완성된 프롬프트가 여기에 보여요.</div>
+    <button type="button" class="primary" id="copyPrompt" style="align-self:flex-start">프롬프트 복사</button>
+    <details><summary>미션별 프롬프트 틀 보기</summary>
+      <p><b>미션 1</b> 너는 [인기 과학 유튜버]야. 이 내용을 [초등학생 구독자도 이해하게 비유를 들어서], [오프닝 인사가 포함된 방송 대본]으로 요약해 줘.</p>
+      <p><b>미션 2</b> 너는 [부산 토박이 여행 가이드]야. 외국인 친구에게 [장소의 매력과 맛집 팁]을 담아, [친근한 말투의 영어 안내문]을 작성해 줘.</p>
+      <p><b>미션 3</b> 너는 [창의력 대장]이야. [주제]에 대해 [웃긴 / 감동적인 / 4글자] 스타일로 10가지를 추천해 줘.</p>
+    </details>
+  </section>
+
+  <section id="s4" data-sec>
+    <div class="sec-head"><span class="num">4</span><h2>결과와 비교</h2><span class="tag">구현</span></div>
+    <label class="f">R-C-F 프롬프트의 결과 요약 <textarea id="a2" placeholder="AI가 만든 결과물을 두세 줄로 요약하세요. (미션 3은 가장 마음에 드는 아이디어 1위도 쓰기)"></textarea></label>
+    <label class="f">처음 질문과 달라진 점 <textarea id="diff" placeholder="예: 비유가 들어가서 훨씬 쉬워졌고, 대본 형식이라 바로 읽을 수 있었다."></textarea></label>
+  </section>
+
+  <section id="s5" data-sec>
+    <div class="sec-head"><span class="num">5</span><h2>팩트 체크 · 개선</h2><span class="tag">태도/성찰</span></div>
+    <p class="hint">미션 1은 교과서와 대조, 미션 2는 역번역으로 확인, 미션 3은 어색하거나 이상한 아이디어가 없는지 확인해요.</p>
+    <div class="f" style="font-weight:700;font-size:14px">틀린 내용이나 어색한 부분이 있었나요?</div>
+    <div class="ox" role="radiogroup" aria-label="오류 여부">
+      <label class="choice"><input type="radio" name="ox" value="있었다"><span>있었다 O</span></label>
+      <label class="choice"><input type="radio" name="ox" value="없었다"><span>없었다 X</span></label>
+    </div>
+    <label class="f">어떤 부분이었나요? (없었다면 어떻게 확인했는지) <textarea id="err" placeholder="예: '소장 길이가 1m'라고 했는데 교과서에는 약 6~7m로 나와 있었다."></textarea></label>
+    <label class="f">고쳐서 다시 물은 프롬프트 <textarea id="q3" placeholder="예: 맥락에 '교과서 128쪽 내용만 바탕으로'를 추가해서 다시 물었다."></textarea></label>
+    <label class="f">고친 뒤 달라진 점 <textarea id="after" placeholder="예: 틀린 숫자가 고쳐졌고 교과서 표현과 같아졌다."></textarea></label>
+  </section>
+
+  <section id="s6" data-sec>
+    <div class="sec-head"><span class="num">6</span><h2>성찰</h2><span class="tag">태도/성찰</span></div>
+    <label class="f">AI에게 어떻게 물었을 때 가장 좋은 답이 나왔나요? <textarea id="ref" placeholder="예: 대상을 '초등학생'으로 정해 주니 설명 수준이 딱 맞았다."></textarea></label>
+    <div class="f" style="font-weight:700;font-size:14px">오늘 지킨 사용 수칙에 체크하세요</div>
+    <div class="rules">
+      <label><input type="checkbox" name="rule" value="개인정보를 입력하지 않았다">개인정보(이름, 전화번호, 주소 등)를 입력하지 않았다</label>
+      <label><input type="checkbox" name="rule" value="바른 말을 사용했다">비속어나 부적절한 단어를 입력하지 않았다</label>
+      <label><input type="checkbox" name="rule" value="AI 답을 그대로 믿지 않고 확인했다">AI 답을 그대로 믿지 않고 확인했다</label>
+      <label><input type="checkbox" name="rule" value="AI 결과물을 내 것처럼 베끼지 않았다">AI 결과물을 내 것처럼 베끼지 않았다</label>
+    </div>
+    <div class="blank"><span>AI는 내가 (</span><input type="text" id="blank" aria-label="빈칸"><span>)하게 질문할수록 더 똑똑해진다.</span></div>
+  </section>
+
+  <section class="submit">
+    <div class="sec-head"><h2>제출하기</h2></div>
+    <p class="hint">다 썼으면 ‘제출’을 누르세요. 선생님께 바로 전달돼요. 고쳐서 다시 제출하면 마지막에 낸 보고서로 채점해요.</p>
+    <p class="missing" id="missing"></p>
+    <div class="btns">
+      <button type="button" class="primary" id="submitBtn">제출</button>
+      <button type="button" class="ghost" id="clearBtn">처음부터 다시 쓰기</button>
+    </div>
+    <p class="toast" id="toast" role="status"></p>
+    <details class="fallback">
+      <summary>제출이 안 될 때</summary>
+      <p class="hint">‘보고서 복사’를 누른 뒤 선생님이 안내한 곳(패들렛 등)에 붙여넣으세요.</p>
+      <div class="btns"><button type="button" class="ghost" id="copyReport">보고서 복사</button></div>
+      <textarea class="out" id="out" readonly aria-label="제출용 보고서 내용"></textarea>
+    </details>
+  </section>
+
+  <p class="privacy">쓰는 중인 내용은 이 컴퓨터에만 임시로 남고, ‘제출’을 눌러야 선생님께 전달됩니다.</p>
+</div>
+
+<script>
+(function(){
+  /* ▼ 선생님 설정: 구글 앱스 스크립트 웹 앱 주소를 따옴표 안에 붙여넣으세요 */
+  const SCRIPT_URL = "";
+  /* ▲ 여기까지 */
+  const KEY = "ai-report-5-draft";
+  const IDKEY = "ai-report-5-id";
+  const $ = (id) => document.getElementById(id);
+  const fields = ["sid","sname","topic","q1","a1","r","c","fm","a2","diff","err","q3","after","ref","blank"];
+  const radio = (name) => { const el = document.querySelector('input[name="'+name+'"]:checked'); return el ? el.value : ""; };
+  const rules = () => [...document.querySelectorAll('input[name="rule"]:checked')].map(e => e.value);
+  const v = (id) => $(id).value.trim();
+  let confirmClear = false;
+
+  function load(){
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(KEY) || "null"); } catch(e) {}
+    if (!d) return;
+    fields.forEach(f => { if (typeof d[f] === "string") $(f).value = d[f]; });
+    ["mission","ox"].forEach(n => { if (d[n]) { const el = document.querySelector('input[name="'+n+'"][value="'+CSS.escape(d[n])+'"]'); if (el) el.checked = true; } });
+    (d.rules || []).forEach(r => { const el = document.querySelector('input[name="rule"][value="'+CSS.escape(r)+'"]'); if (el) el.checked = true; });
+  }
+  function save(){
+    const d = {}; fields.forEach(f => d[f] = $(f).value);
+    d.mission = radio("mission"); d.ox = radio("ox"); d.rules = rules();
+    try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e) {}
+  }
+  function esc(s){ return s.replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
+  function prompt(){ return [v("r"), v("c"), v("fm")].filter(Boolean).join(" "); }
+
+  function sections(){
+    return [
+      ["선택한 미션", !!radio("mission") && !!v("topic")],
+      ["처음 질문", !!v("q1") && !!v("a1")],
+      ["R-C-F 프롬프트", !!v("r") && !!v("c") && !!v("fm")],
+      ["결과와 비교", !!v("a2") && !!v("diff")],
+      ["팩트 체크 · 개선", !!radio("ox") && !!v("err") && !!v("q3")],
+      ["성찰", !!v("ref") && rules().length > 0 && !!v("blank")]
+    ];
+  }
+
+  function build(){
+    const L = [];
+    L.push("[5차시 생성형 AI 실습 보고서]");
+    L.push("학번: " + (v("sid") || "-") + "   이름: " + (v("sname") || "-"));
+    L.push("");
+    L.push("① 선택한 미션: " + (radio("mission") || "-"));
+    L.push("   주제: " + (v("topic") || "-"));
+    L.push("");
+    L.push("② 처음 질문(Level 1): " + (v("q1") || "-"));
+    L.push("   AI 대답 요약: " + (v("a1") || "-"));
+    L.push("");
+    L.push("③ R-C-F 프롬프트(Level 2)");
+    L.push("   [역할 R] " + (v("r") || "-"));
+    L.push("   [맥락 C] " + (v("c") || "-"));
+    L.push("   [형식 F] " + (v("fm") || "-"));
+    L.push("");
+    L.push("④ 결과 요약: " + (v("a2") || "-"));
+    L.push("   처음 질문과 달라진 점: " + (v("diff") || "-"));
+    L.push("");
+    L.push("⑤ 틀린 내용·어색한 부분: " + (radio("ox") || "-") + " / " + (v("err") || "-"));
+    L.push("   고쳐서 다시 물은 프롬프트: " + (v("q3") || "-"));
+    L.push("   고친 뒤 달라진 점: " + (v("after") || "-"));
+    L.push("");
+    L.push("⑥ 가장 좋았던 질문 방법: " + (v("ref") || "-"));
+    L.push("   지킨 사용 수칙: " + (rules().join(", ") || "-"));
+    L.push("   AI는 내가 (" + (v("blank") || "   ") + ")하게 질문할수록 더 똑똑해진다.");
+    return L.join("\n");
+  }
+
+  function render(){
+    const secs = sections();
+    const n = secs.filter(s => s[1]).length;
+    $("meter").style.width = (n / 6 * 100) + "%";
+    $("count").textContent = n + " / 6 항목";
+    document.querySelectorAll("[data-sec]").forEach((el, i) => el.classList.toggle("done", secs[i][1]));
+    [["pr","r"],["pc","c"],["pf","fm"]].forEach(([p,f]) => $(p).classList.toggle("on", !!v(f)));
+    const parts = [["r",v("r")],["c",v("c")],["fm",v("fm")]].filter(x => x[1]);
+    const pv = $("prev");
+    if (parts.length) { pv.classList.remove("empty"); pv.innerHTML = parts.map(([k,t]) => '<span class="'+k+'">'+esc(t)+'</span>').join(" "); }
+    else { pv.classList.add("empty"); pv.textContent = "세 칸을 채우면 완성된 프롬프트가 여기에 보여요."; }
+    const miss = [];
+    if (!v("sid") || !v("sname")) miss.push("학번·이름");
+    secs.forEach((s, i) => { if (!s[1]) miss.push((i + 1) + " " + s[0]); });
+    $("missing").textContent = miss.length ? "아직 덜 쓴 곳: " + miss.join(", ") : "모든 항목을 다 썼어요. 제출하세요!";
+    $("out").value = build();
+  }
+
+  async function copy(text, okMsg){
+    const t = $("toast");
+    try { await navigator.clipboard.writeText(text); t.textContent = okMsg; }
+    catch(e) { const o = $("out"); o.focus(); o.select(); t.textContent = "자동 복사가 안 돼요. 아래 글이 선택됐으니 Ctrl+C로 복사하세요."; }
+  }
+
+  load(); render();
+  document.addEventListener("input", () => { confirmClear = false; if (!sending && $("submitBtn").textContent === "그래도 제출하기") { $("submitBtn").textContent = "제출"; } confirmIncomplete = false; $("clearBtn").textContent = "처음부터 다시 쓰기"; save(); render(); });
+  document.addEventListener("change", () => { save(); render(); });
+  $("copyReport").addEventListener("click", () => copy(build(), "보고서를 복사했어요. 선생님이 안내한 곳에 붙여넣으세요."));
+
+  function newId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function getId(){
+    let id = null;
+    try { id = localStorage.getItem(IDKEY); } catch(e) {}
+    if (!id) { id = newId(); try { localStorage.setItem(IDKEY, id); } catch(e) {} }
+    return id;
+  }
+  let confirmIncomplete = false, sending = false;
+  $("submitBtn").addEventListener("click", async () => {
+    const t = $("toast"), btn = $("submitBtn");
+    if (sending) return;
+    if (!v("sid") || !v("sname")) { t.textContent = "학번과 이름을 먼저 써 주세요."; $("sid").focus(); return; }
+    const left = sections().filter(s => !s[1]).length;
+    if (left && !confirmIncomplete) {
+      confirmIncomplete = true; btn.textContent = "그래도 제출하기";
+      t.textContent = "아직 덜 쓴 항목이 " + left + "개 있어요. 그대로 내려면 한 번 더 누르세요.";
+      return;
+    }
+    if (!SCRIPT_URL) { t.textContent = "제출 주소가 아직 설정되지 않았어요. 아래 ‘제출이 안 될 때’로 내 주세요."; document.querySelector(".fallback").open = true; return; }
+    const data = {
+      id: getId(), sid: v("sid"), sname: v("sname"), mission: radio("mission"), topic: v("topic"),
+      q1: v("q1"), a1: v("a1"), r: v("r"), c: v("c"), fm: v("fm"), a2: v("a2"), diff: v("diff"),
+      ox: radio("ox"), err: v("err"), q3: v("q3"), after: v("after"), ref: v("ref"), rules: rules().join(", "), blank: v("blank")
+    };
+    sending = true; btn.disabled = true; btn.textContent = "보내는 중…"; t.textContent = "";
+    try {
+      const res = await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(data) });
+      const out = await res.json();
+      if (!out.ok) throw new Error(out.error || "fail");
+      try { localStorage.removeItem(IDKEY); } catch(e) {}
+      t.textContent = "제출했어요! (" + new Date().toLocaleTimeString("ko-KR", {hour: "2-digit", minute: "2-digit"}) + ") 고쳐서 다시 내도 돼요.";
+      btn.textContent = "다시 제출";
+    } catch(e) {
+      t.textContent = "제출이 안 됐어요. 잠시 뒤 다시 누르거나, 아래 ‘제출이 안 될 때’로 내 주세요.";
+      btn.textContent = "제출";
+      document.querySelector(".fallback").open = true;
+    } finally { sending = false; btn.disabled = false; confirmIncomplete = false; }
+  });
+  $("copyPrompt").addEventListener("click", () => {
+    const p = prompt();
+    if (!p) { $("toast").textContent = "먼저 R-C-F 칸을 채워 주세요."; return; }
+    navigator.clipboard.writeText(p).then(() => { $("copyPrompt").textContent = "복사했어요"; setTimeout(() => $("copyPrompt").textContent = "프롬프트 복사", 1500); })
+      .catch(() => { $("copyPrompt").textContent = "복사가 안 되면 직접 선택해 복사하세요"; });
+  });
+  $("clearBtn").addEventListener("click", () => {
+    if (!confirmClear) { confirmClear = true; $("clearBtn").textContent = "정말 지울까요? 한 번 더 누르기"; return; }
+    fields.forEach(f => $(f).value = "");
+    document.querySelectorAll('input[type=radio],input[type=checkbox]').forEach(e => e.checked = false);
+    try { localStorage.removeItem(KEY); localStorage.removeItem(IDKEY); } catch(e) {}
+    confirmClear = false; $("clearBtn").textContent = "처음부터 다시 쓰기"; $("toast").textContent = "모두 지웠어요.";
+    render();
+  });
+})();
+</script>
+</body>
+</html>
